@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sternberg Memory Task</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #000;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {x
+            max-width: 800px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+            font-weight: bold;
+        }
+
+        .username-section {
+            margin-bottom: 2rem;
+        }
+
+        .username-input {
+            background-color: #000;
+            color: #fff;
+            border: 2px solid #fff;
+            padding: 15px 20px;
+            font-size: 1.2rem;
+            width: 300px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .username-input:focus {
+            outline: none;
+            border-color: #ccc;
+        }
+
+        .start-btn {
+            background-color: #fff;
+            color: #000;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+
+        .start-btn:hover {
+            background-color: #ccc;
+        }
+
+        .experiment-section {
+            display: none;
+        }
+
+        .memory-set {
+            font-size: 3rem;
+            margin: 2rem 0;
+            letter-spacing: 0.5rem;
+            font-weight: bold;
+        }
+
+        .probe-letter {
+            font-size: 4rem;
+            margin: 2rem 0;
+            font-weight: bold;
+        }
+
+        .instructions {
+            font-size: 1.2rem;
+            margin: 1rem 0;
+            color: #ccc;
+        }
+
+        .response-buttons {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            margin: 2rem 0;
+        }
+
+        .response-btn {
+            background-color: #fff;
+            color: #000;
+            border: none;
+            padding: 20px 40px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+            min-width: 120px;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+
+        .response-btn:hover {
+            background-color: #ccc;
+        }
+
+        .response-btn:active {
+            background-color: #999;
+        }
+
+        .progress {
+            margin: 2rem 0;
+            font-size: 1.2rem;
+        }
+
+        .results-section {
+            display: none;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 2rem 0;
+            background-color: #111;
+            border: 1px solid #333;
+        }
+
+        .chart-tooltip {
+            position: absolute;
+            background-color: rgba(255, 255, 255, 0.9);
+            color: #000;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            pointer-events: none;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .keyboard-hint {
+            font-size: 1rem;
+            color: #666;
+            margin-top: 1rem;
+        }
+
+        .trial-info {
+            font-size: 1rem;
+            color: #ccc;
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Sternberg Memory Task</h1>
+        
+        <div class="username-section" id="usernameSection">
+            <input type="text" class="username-input" id="usernameInput" placeholder="Enter your username">
+            <br>
+            <button class="start-btn" onclick="startExperiment()">Start Experiment</button>
+        </div>
+
+        <div class="experiment-section" id="experimentSection">
+            <div class="instructions">Memorize these letters:</div>
+            <div class="memory-set" id="memorySet"></div>
+            
+            <div class="instructions" id="probeInstructions" style="display: none;">
+                Is this letter in the set you just memorized?
+            </div>
+            <div class="probe-letter" id="probeLetter" style="display: none;"></div>
+            
+            <div class="response-buttons" id="responseButtons" style="display: none;">
+                <button class="response-btn" onclick="respond(true)">YES</button>
+                <button class="response-btn" onclick="respond(false)">NO</button>
+            </div>
+            
+            <div class="keyboard-hint">
+                Press <strong>,</strong> for YES or <strong>.</strong> for NO
+            </div>
+            
+            <div class="progress" id="progress"></div>
+            <div class="trial-info" id="trialInfo"></div>
+        </div>
+
+        <div class="results-section" id="resultsSection">
+            <h2>Your Results</h2>
+            <div class="chart-container">
+                <canvas id="resultsChart"></canvas>
+                <div class="chart-tooltip" id="chartTooltip"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let experimentData = {
+            username: '',
+            trials: [],
+            currentTrial: 0,
+            memorySet: [],
+            probeLetter: '',
+            startTime: 0,
+            responseStartTime: 0,
+            isResponding: false
+        };
+
+        // Database configuration
+        const DB_CONFIG = {
+            host: 'ep-round-lake-ad9bn5fl-pooler.c-2.us-east-1.aws.neon.tech',
+            database: 'neondb',
+            user: 'neondb_owner',
+            password: 'npg_0DHgcXRdnoO8',
+            ssl: { rejectUnauthorized: false },
+            port: 5432
+        };
+
+        // Function to save trial data to database
+        async function saveTrialToDatabase(trialData) {
+            try {
+                const response = await fetch('/api/save-trial', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: experimentData.username,
+                        trial_number: trialData.trial,
+                        memory_set_size: trialData.memorySetSize,
+                        probe_letter: trialData.probeLetter,
+                        user_response: trialData.userResponse,
+                        correct_answer: trialData.correctAnswer,
+                        is_correct: trialData.isCorrect,
+                        response_time_ms: trialData.responseTime
+                    })
+                });
+
+                if (!response.ok) {
+                    console.error('Failed to save trial data:', response.statusText);
+                }
+            } catch (error) {
+                console.error('Error saving trial data:', error);
+            }
+        }
+
+        const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        const totalTrials = 5;
+
+        function generateMemorySet(trialNumber) {
+            const setSize = trialNumber + 2; // Trial 1 = 2 letters, Trial 2 = 3 letters, etc.
+            const shuffled = letters.split('').sort(() => Math.random() - 0.5);
+            return shuffled.slice(0, setSize);
+        }
+
+        function generateProbeLetter(memorySet) {
+            const isInSet = Math.random() < 0.5;
+            if (isInSet) {
+                return memorySet[Math.floor(Math.random() * memorySet.length)];
+            } else {
+                const availableLetters = letters.split('').filter(letter => !memorySet.includes(letter));
+                return availableLetters[Math.floor(Math.random() * availableLetters.length)];
+            }
+        }
+
+        function startExperiment() {
+            const username = document.getElementById('usernameInput').value.trim();
+            if (!username) {
+                alert('Please enter your username');
+                return;
+            }
+
+            experimentData.username = username;
+            document.getElementById('usernameSection').style.display = 'none';
+            document.getElementById('experimentSection').style.display = 'block';
+            
+            startTrial();
+        }
+
+        function startTrial() {
+            if (experimentData.currentTrial >= totalTrials) {
+                showResults();
+                return;
+            }
+
+            experimentData.memorySet = generateMemorySet(experimentData.currentTrial);
+            experimentData.probeLetter = generateProbeLetter(experimentData.memorySet);
+            
+            // Show memory set
+            document.getElementById('memorySet').textContent = experimentData.memorySet.join(' ');
+            document.getElementById('memorySet').style.display = 'block';
+            document.getElementById('probeInstructions').style.display = 'none';
+            document.getElementById('probeLetter').style.display = 'none';
+            document.getElementById('responseButtons').style.display = 'none';
+            
+            // Update progress
+            document.getElementById('progress').textContent = `Trial ${experimentData.currentTrial + 1} of ${totalTrials}`;
+            document.getElementById('trialInfo').textContent = `Memory set size: ${experimentData.memorySet.length} letters`;
+            
+            // Show probe after 3 seconds
+            setTimeout(() => {
+                // Hide the memory set
+                document.getElementById('memorySet').style.display = 'none';
+                
+                // Show probe letter and response options
+                document.getElementById('probeInstructions').style.display = 'block';
+                document.getElementById('probeLetter').textContent = experimentData.probeLetter;
+                document.getElementById('probeLetter').style.display = 'block';
+                document.getElementById('responseButtons').style.display = 'flex';
+                
+                experimentData.responseStartTime = Date.now();
+                experimentData.isResponding = true;
+            }, 3000);
+        }
+
+        function respond(userResponse) {
+            if (!experimentData.isResponding) {
+                console.log('Not responding - experiment not in response phase');
+                return;
+            }
+            
+            console.log('Response received:', userResponse);
+            const responseTime = Date.now() - experimentData.responseStartTime;
+            const correctAnswer = experimentData.memorySet.includes(experimentData.probeLetter);
+            const isCorrect = userResponse === correctAnswer;
+                
+            const trialData = {
+                trial: experimentData.currentTrial + 1,
+                memorySetSize: experimentData.memorySet.length,
+                probeLetter: experimentData.probeLetter,
+                userResponse: userResponse,
+                correctAnswer: correctAnswer,
+                isCorrect: isCorrect,
+                responseTime: responseTime
+            };
+
+            experimentData.trials.push(trialData);
+            
+            // Save to database
+            saveTrialToDatabase(trialData);
+            
+            experimentData.currentTrial++;
+            experimentData.isResponding = false;
+            
+            // Start next trial immediately
+            startTrial();
+        }
+
+        function showResults() {
+            document.getElementById('experimentSection').style.display = 'none';
+            document.getElementById('resultsSection').style.display = 'block';
+            
+            createChart();
+        }
+
+        async function createChart() {
+            const ctx = document.getElementById('resultsChart').getContext('2d');
+            const chartContainer = document.getElementById('resultsChart').parentElement;
+            const tooltip = document.getElementById('chartTooltip');
+            
+            // Create scatter plot data - each trial as a separate point
+            const chartData = experimentData.trials.map(trial => ({
+                x: trial.memorySetSize,
+                y: trial.responseTime,
+                trial: trial.trial,
+                isCorrect: trial.isCorrect,
+                probeLetter: trial.probeLetter,
+                userResponse: trial.userResponse,
+                correctAnswer: trial.correctAnswer
+            }));
+
+            // Fetch average results from all players
+            let averageData = [];
+            try {
+                const response = await fetch('/api/average-results');
+                if (response.ok) {
+                    averageData = await response.json();
+                    console.log('Average data from all players:', averageData);
+                }
+            } catch (error) {
+                console.error('Error fetching average results:', error);
+            }
+
+            // Debug: log the data to console
+            console.log('Chart data:', chartData);
+            console.log('Trials data:', experimentData.trials);
+
+            // Prepare average data for chart
+            const averageChartData = averageData.map(avg => ({
+                x: avg.memory_set_size,
+                y: Math.round(avg.avg_response_time),
+                attempts: avg.total_attempts
+            }));
+
+            const chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    datasets: [
+                        {
+                            label: 'Your Results',
+                            data: chartData,
+                            backgroundColor: chartData.map(point => point.isCorrect ? '#00ff00' : '#ff0000'),
+                            borderColor: chartData.map(point => point.isCorrect ? '#00ff00' : '#ff0000'),
+                            pointRadius: 8,
+                            pointHoverRadius: 12,
+                            pointBorderWidth: 2,
+                            pointBorderColor: '#fff',
+                            showLine: true,
+                            tension: 0.1
+                        },
+                        {
+                            label: 'Average of All Players',
+                            data: averageChartData,
+                            backgroundColor: '#888',
+                            borderColor: '#888',
+                            pointRadius: 6,
+                            pointHoverRadius: 10,
+                            pointBorderWidth: 2,
+                            pointBorderColor: '#fff',
+                            showLine: true,
+                            tension: 0.1,
+                            borderDash: [5, 5]
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: `Response Time vs Memory Set Size - ${experimentData.username}`,
+                            color: '#fff',
+                            font: {
+                                size: 18,
+                                weight: 'bold'
+                            }
+                        },
+                        legend: {
+                            display: true,
+                            labels: {
+                                color: '#fff',
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            title: {
+                                display: true,
+                                text: 'Memory Set Size (letters)',
+                                color: '#fff',
+                                font: {
+                                    size: 14,
+                                    weight: 'bold'
+                                }
+                            },
+                            ticks: {
+                                color: '#fff',
+                                font: {
+                                    size: 12
+                                },
+                                stepSize: 1
+                            },
+                            grid: {
+                                color: '#333'
+                            },
+                            min: 1,
+                            max: 7
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Response Time (milliseconds)',
+                                color: '#fff',
+                                font: {
+                                    size: 14,
+                                    weight: 'bold'
+                                }
+                            },
+                            ticks: {
+                                color: '#fff',
+                                font: {
+                                    size: 12
+                                }
+                            },
+                            grid: {
+                                color: '#333'
+                            }
+                        }
+                    },
+                    onHover: (event, activeElements) => {
+                        if (activeElements.length > 0) {
+                            const element = activeElements[0];
+                            const datasetIndex = element.datasetIndex;
+                            const dataIndex = element.index;
+                            
+                            const rect = chartContainer.getBoundingClientRect();
+                            const x = event.clientX - rect.left;
+                            const y = event.clientY - rect.top;
+                            
+                            tooltip.style.left = (x + 10) + 'px';
+                            tooltip.style.top = (y - 10) + 'px';
+                            tooltip.style.display = 'block';
+                            
+                            if (datasetIndex === 0) {
+                                // Your results
+                                const point = chartData[dataIndex];
+                                tooltip.innerHTML = `
+                                    <div><strong>Your Trial ${point.trial}</strong></div>
+                                    <div>Memory Set: ${point.x} letters</div>
+                                    <div>Probe Letter: ${point.probeLetter}</div>
+                                    <div>Response: ${point.userResponse ? 'YES' : 'NO'}</div>
+                                    <div>Correct: ${point.isCorrect ? 'YES' : 'NO'}</div>
+                                    <div>Time: ${point.y}ms</div>
+                                `;
+                            } else {
+                                // Average results
+                                const point = averageChartData[dataIndex];
+                                tooltip.innerHTML = `
+                                    <div><strong>Average of All Players</strong></div>
+                                    <div>Memory Set: ${point.x} letters</div>
+                                    <div>Average Time: ${point.y}ms</div>
+                                    <div>Total Attempts: ${point.attempts}</div>
+                                `;
+                            }
+                        } else {
+                            tooltip.style.display = 'none';
+                        }
+                    }
+                }
+            });
+        }
+
+        // Keyboard support
+        document.addEventListener('keydown', (event) => {
+            if (experimentData.isResponding) {
+                if (event.key === ',') {
+                    respond(true);
+                } else if (event.key === '.') {
+                    respond(false);
+                }
+            }
+        });
+
+        // Prevent default behavior for comma and period
+        document.addEventListener('keydown', (event) => {
+            if (event.key === ',' || event.key === '.') {
+                event.preventDefault();
+            }
+        });
+    </script>
+</body>
+</html>
