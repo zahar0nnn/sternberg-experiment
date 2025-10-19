@@ -261,7 +261,7 @@
         }
 
         const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        const totalTrials = 15;
+        const totalTrials = 15; // Changed from 5 to 15
 
         function generateMemorySet(trialNumber) {
             const setSize = trialNumber + 2; // Trial 1 = 2 letters, Trial 2 = 3 letters, etc.
@@ -485,7 +485,7 @@
                                 color: '#333'
                             },
                             min: 1,
-                            max: 7
+                            max: 16 // Adjusted to accommodate memory set sizes up to 16 (trial 15 + 2)
                         },
                         y: {
                             title: {
