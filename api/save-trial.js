@@ -7,6 +7,9 @@ const pool = new Pool({
 });
 
 module.exports = async (req, res) => {
+    console.log('API called with method:', req.method);
+    console.log('Request body:', req.body);
+    
     // Enable CORS
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -18,7 +21,8 @@ module.exports = async (req, res) => {
     }
 
     if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method not allowed' });
+        console.log('Method not allowed:', req.method);
+        return res.status(405).json({ error: 'Method not allowed', received: req.method });
     }
 
     try {
