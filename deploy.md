@@ -52,11 +52,14 @@ git push -u origin main
 
 ## 🔧 Environment Variables
 
-Set this environment variable in Vercel:
+Set this environment variable in Vercel Dashboard:
 
-```
-DATABASE_URL=postgresql://neondb_owner:npg_0DHgcXRdnoO8@ep-round-lake-ad9bn5fl-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
-```
+1. Go to your project in Vercel Dashboard
+2. Go to Settings → Environment Variables
+3. Add new variable:
+   - **Name**: `DATABASE_URL`
+   - **Value**: `postgresql://neondb_owner:npg_0DHgcXRdnoO8@ep-round-lake-ad9bn5fl-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require`
+   - **Environment**: Production, Preview, Development
 
 ## 📊 Database Setup
 

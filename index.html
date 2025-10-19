@@ -24,7 +24,7 @@
             padding: 20px;
         }
 
-        .container {x
+        .container {
             max-width: 800px;
             width: 100%;
             text-align: center;
@@ -221,16 +221,6 @@
             isResponding: false
         };
 
-        // Database configuration
-        const DB_CONFIG = {
-            host: 'ep-round-lake-ad9bn5fl-pooler.c-2.us-east-1.aws.neon.tech',
-            database: 'neondb',
-            user: 'neondb_owner',
-            password: 'npg_0DHgcXRdnoO8',
-            ssl: { rejectUnauthorized: false },
-            port: 5432
-        };
-
         // Function to save trial data to database
         async function saveTrialToDatabase(trialData) {
             try {
@@ -338,7 +328,7 @@
             const responseTime = Date.now() - experimentData.responseStartTime;
             const correctAnswer = experimentData.memorySet.includes(experimentData.probeLetter);
             const isCorrect = userResponse === correctAnswer;
-                
+            
             const trialData = {
                 trial: experimentData.currentTrial + 1,
                 memorySetSize: experimentData.memorySet.length,
