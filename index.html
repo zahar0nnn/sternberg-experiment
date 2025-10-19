@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="sk">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sternberg Memory Task</title>
+    <title>Úloha pamäti Sternberga</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * {
@@ -22,6 +22,7 @@
             justify-content: center;
             min-height: 100vh;
             padding: 20px;
+            position: relative;
         }
 
         .container {
@@ -166,34 +167,42 @@
             color: #ccc;
             margin: 1rem 0;
         }
+
+        .attribution {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            font-size: 1rem;
+            color: #666;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Sternberg Memory Task</h1>
+        <h1>Úloha pamäti Sternberga</h1>
         
         <div class="username-section" id="usernameSection">
-            <input type="text" class="username-input" id="usernameInput" placeholder="Enter your username">
+            <input type="text" class="username-input" id="usernameInput" placeholder="Zadajte svoje používateľské meno">
             <br>
-            <button class="start-btn" onclick="startExperiment()">Start Experiment</button>
+            <button class="start-btn" onclick="startExperiment()">Začať experiment</button>
         </div>
 
         <div class="experiment-section" id="experimentSection">
-            <div class="instructions">Memorize these letters:</div>
+            <div class="instructions">Zapamätajte si tieto písmená:</div>
             <div class="memory-set" id="memorySet"></div>
             
             <div class="instructions" id="probeInstructions" style="display: none;">
-                Is this letter in the set you just memorized?
+                Je toto písmeno v sade, ktorú ste si zapamätali?
             </div>
             <div class="probe-letter" id="probeLetter" style="display: none;"></div>
             
             <div class="response-buttons" id="responseButtons" style="display: none;">
-                <button class="response-btn" onclick="respond(true)">YES</button>
-                <button class="response-btn" onclick="respond(false)">NO</button>
+                <button class="response-btn" onclick="respond(true)">ÁNO</button>
+                <button class="response-btn" onclick="respond(false)">NIE</button>
             </div>
             
             <div class="keyboard-hint">
-                Press <strong>,</strong> for YES or <strong>.</strong> for NO
+                Stlačte <strong>,</strong> pre ÁNO alebo <strong>.</strong> pre NIE
             </div>
             
             <div class="progress" id="progress"></div>
@@ -201,13 +210,15 @@
         </div>
 
         <div class="results-section" id="resultsSection">
-            <h2>Your Results</h2>
+            <h2>Vaše výsledky</h2>
             <div class="chart-container">
                 <canvas id="resultsChart"></canvas>
                 <div class="chart-tooltip" id="chartTooltip"></div>
             </div>
         </div>
     </div>
+
+    <div class="attribution">Zakhar Diachuk, Bohutskyi Ivan, 2025</div>
 
     <script>
         let experimentData = {
@@ -242,10 +253,10 @@
                 });
 
                 if (!response.ok) {
-                    console.error('Failed to save trial data:', response.statusText);
+                    console.error('Nepodarilo sa uložiť údaje pokusu:', response.statusText);
                 }
             } catch (error) {
-                console.error('Error saving trial data:', error);
+                console.error('Chyba pri ukladaní údajov pokusu:', error);
             }
         }
 
@@ -271,7 +282,7 @@
         function startExperiment() {
             const username = document.getElementById('usernameInput').value.trim();
             if (!username) {
-                alert('Please enter your username');
+                alert('Prosím, zadajte svoje používateľské meno');
                 return;
             }
 
@@ -299,8 +310,8 @@
             document.getElementById('responseButtons').style.display = 'none';
             
             // Update progress
-            document.getElementById('progress').textContent = `Trial ${experimentData.currentTrial + 1} of ${totalTrials}`;
-            document.getElementById('trialInfo').textContent = `Memory set size: ${experimentData.memorySet.length} letters`;
+            document.getElementById('progress').textContent = `Pokus ${experimentData.currentTrial + 1} z ${totalTrials}`;
+            document.getElementById('trialInfo').textContent = `Veľkosť pamäťovej sady: ${experimentData.memorySet.length} písmen`;
             
             // Show probe after 3 seconds
             setTimeout(() => {
@@ -320,11 +331,11 @@
 
         function respond(userResponse) {
             if (!experimentData.isResponding) {
-                console.log('Not responding - experiment not in response phase');
+                console.log('Nereaguje - experiment nie je vo fáze odpovede');
                 return;
             }
             
-            console.log('Response received:', userResponse);
+            console.log('Prijatá odpoveď:', userResponse);
             const responseTime = Date.now() - experimentData.responseStartTime;
             const correctAnswer = experimentData.memorySet.includes(experimentData.probeLetter);
             const isCorrect = userResponse === correctAnswer;
@@ -380,15 +391,15 @@
                 const response = await fetch('/api/average-results');
                 if (response.ok) {
                     averageData = await response.json();
-                    console.log('Average data from all players:', averageData);
+                    console.log('Priemerné údaje od všetkých hráčov:', averageData);
                 }
             } catch (error) {
-                console.error('Error fetching average results:', error);
+                console.error('Chyba pri načítavaní priemerných výsledkov:', error);
             }
 
             // Debug: log the data to console
-            console.log('Chart data:', chartData);
-            console.log('Trials data:', experimentData.trials);
+            console.log('Údaje grafu:', chartData);
+            console.log('Údaje pokusov:', experimentData.trials);
 
             // Prepare average data for chart
             const averageChartData = averageData.map(avg => ({
@@ -402,7 +413,7 @@
                 data: {
                     datasets: [
                         {
-                            label: 'Your Results',
+                            label: 'Vaše výsledky',
                             data: chartData,
                             backgroundColor: chartData.map(point => point.isCorrect ? '#00ff00' : '#ff0000'),
                             borderColor: chartData.map(point => point.isCorrect ? '#00ff00' : '#ff0000'),
@@ -414,7 +425,7 @@
                             tension: 0.1
                         },
                         {
-                            label: 'Average of All Players',
+                            label: 'Priemer všetkých hráčov',
                             data: averageChartData,
                             backgroundColor: '#888',
                             borderColor: '#888',
@@ -434,7 +445,7 @@
                     plugins: {
                         title: {
                             display: true,
-                            text: `Response Time vs Memory Set Size - ${experimentData.username}`,
+                            text: `Čas odozvy vs Veľkosť pamäťovej sady - ${experimentData.username}`,
                             color: '#fff',
                             font: {
                                 size: 18,
@@ -456,7 +467,7 @@
                             type: 'linear',
                             title: {
                                 display: true,
-                                text: 'Memory Set Size (letters)',
+                                text: 'Veľkosť pamäťovej sady (písmená)',
                                 color: '#fff',
                                 font: {
                                     size: 14,
@@ -479,7 +490,7 @@
                         y: {
                             title: {
                                 display: true,
-                                text: 'Response Time (milliseconds)',
+                                text: 'Čas odozvy (milisekundy)',
                                 color: '#fff',
                                 font: {
                                     size: 14,
@@ -515,21 +526,21 @@
                                 // Your results
                                 const point = chartData[dataIndex];
                                 tooltip.innerHTML = `
-                                    <div><strong>Your Trial ${point.trial}</strong></div>
-                                    <div>Memory Set: ${point.x} letters</div>
-                                    <div>Probe Letter: ${point.probeLetter}</div>
-                                    <div>Response: ${point.userResponse ? 'YES' : 'NO'}</div>
-                                    <div>Correct: ${point.isCorrect ? 'YES' : 'NO'}</div>
-                                    <div>Time: ${point.y}ms</div>
+                                    <div><strong>Váš pokus ${point.trial}</strong></div>
+                                    <div>Pamäťová sada: ${point.x} písmen</div>
+                                    <div>Testovacie písmeno: ${point.probeLetter}</div>
+                                    <div>Odpoveď: ${point.userResponse ? 'ÁNO' : 'NIE'}</div>
+                                    <div>Správne: ${point.isCorrect ? 'ÁNO' : 'NIE'}</div>
+                                    <div>Čas: ${point.y}ms</div>
                                 `;
                             } else {
                                 // Average results
                                 const point = averageChartData[dataIndex];
                                 tooltip.innerHTML = `
-                                    <div><strong>Average of All Players</strong></div>
-                                    <div>Memory Set: ${point.x} letters</div>
-                                    <div>Average Time: ${point.y}ms</div>
-                                    <div>Total Attempts: ${point.attempts}</div>
+                                    <div><strong>Priemer všetkých hráčov</strong></div>
+                                    <div>Pamäťová sada: ${point.x} písmen</div>
+                                    <div>Priemerný čas: ${point.y}ms</div>
+                                    <div>Celkový počet pokusov: ${point.attempts}</div>
                                 `;
                             }
                         } else {
