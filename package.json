@@ -2,7 +2,7 @@
   "name": "sternberg-experiment",
   "version": "1.0.0",
   "description": "Sternberg Memory Task Experiment with PostgreSQL",
-  "main": "server.js",
+  "main": "index.html",
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
